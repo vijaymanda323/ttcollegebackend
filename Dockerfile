@@ -1,24 +1,28 @@
-FROM maven:3.9.4-openjdk-21-slim AS build
+# ---------- Build Stage ----------
+FROM maven:3.9.9-eclipse-temurin-21 AS build
 
 WORKDIR /app
 
-# Copy pom.xml and download dependencies
+# Copy pom.xml and download dependencies (better caching)
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
-# Copy source code and build
+# Copy source code
 COPY src ./src
+
+# Build the application
 RUN mvn clean package -DskipTests
 
-# Runtime stage
-FROM openjdk:21-jre-slim
+
+# ---------- Runtime Stage ----------
+FROM eclipse-temurin:21-jre-jammy
 
 WORKDIR /app
 
-# Copy the built JAR from the build stage
+# Copy the built JAR from build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Expose the port the app runs on
+# Expose application port
 EXPOSE 8080
 
 # Run the application
